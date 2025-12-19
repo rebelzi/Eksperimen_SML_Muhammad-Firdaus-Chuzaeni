@@ -1,0 +1,81 @@
+name: Automated Data Preprocessing
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'diabetes-datasets.csv'
+      - 'preprocessing/automate_MuhammadFirdausChuzaeni.py'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  preprocess-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pandas numpy scikit-learn
+        
+    - name: Run preprocessing pipeline
+      run: |
+        cd preprocessing
+        python automate_MuhammadFirdausChuzaeni.py
+        
+    - name: Verify output files
+      run: |
+        echo "Checking preprocessed files..."
+        ls -lh preprocessing/diabetes_preprocessing/
+        
+        if [ -f "preprocessing/diabetes_preprocessing/preprocessed_diabetes.csv" ]; then
+          echo "✓ preprocessed_diabetes.csv generated"
+          wc -l preprocessing/diabetes_preprocessing/preprocessed_diabetes.csv
+        else
+          echo "✗ preprocessed_diabetes.csv NOT found"
+          exit 1
+        fi
+        
+        if [ -f "preprocessing/diabetes_preprocessing/X_train.csv" ]; then
+          echo "✓ X_train.csv generated"
+        else
+          echo "✗ X_train.csv NOT found"
+          exit 1
+        fi
+        
+        if [ -f "preprocessing/diabetes_preprocessing/X_test.csv" ]; then
+          echo "✓ X_test.csv generated"
+        else
+          echo "✗ X_test.csv NOT found"
+          exit 1
+        fi
+        
+    - name: Upload preprocessed data as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: preprocessed-diabetes-data
+        path: preprocessing/diabetes_preprocessing/
+        retention-days: 30
+        
+    - name: Commit and push preprocessed data
+      if: github.event_name != 'pull_request'
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add preprocessing/diabetes_preprocessing/*.csv
+        git diff --staged --quiet || git commit -m "🤖 Auto-update: Preprocessed data [skip ci]"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

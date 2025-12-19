@@ -33,7 +33,7 @@ def impute_missing_values(df):
     
     for col in columns_to_impute:
         median_val = df_imputed[col].median()
-        df_imputed[col].fillna(median_val, inplace=True)
+        df_imputed[col] = df_imputed[col].fillna(median_val)
     
     print(f"✓ Missing values imputed")
     return df_imputed
@@ -131,12 +131,30 @@ def preprocess_pipeline(input_path, output_path):
 
 if __name__ == "__main__":
     # Define paths
-    input_path = "datasets/diabetes-datasets.csv"
+    input_path = "../diabetes-datasets.csv"
     output_path = "diabetes_preprocessing/preprocessed_diabetes.csv"
     
     # Run preprocessing
     df_final = preprocess_pipeline(input_path, output_path)
     
     if df_final is not None:
-        print("\nPreprocessing successful!")
+        print("\n✅ Preprocessing successful!")
         print(f"Data ready for training with shape: {df_final.shape}")
+        
+        # Also split and save train/test sets
+        X = df_final.drop('Outcome', axis=1)
+        y = df_final['Outcome']
+        
+        from sklearn.model_selection import train_test_split
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42, stratify=y
+        )
+        
+        # Save train-test split
+        X_train.to_csv('diabetes_preprocessing/X_train.csv', index=False)
+        X_test.to_csv('diabetes_preprocessing/X_test.csv', index=False)
+        y_train.to_csv('diabetes_preprocessing/y_train.csv', index=False)
+        y_test.to_csv('diabetes_preprocessing/y_test.csv', index=False)
+        print("✓ Train-test split saved")
+        print(f"  Training set: {X_train.shape[0]} samples")
+        print(f"  Test set: {X_test.shape[0]} samples")

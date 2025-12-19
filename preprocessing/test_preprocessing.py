@@ -1,7 +1,11 @@
-
 import pandas as pd
 import numpy as np
-from preprocessing.automate_MuhammadFirdausChuzaeni import preprocess_pipeline
+import sys
+import os
+
+# Add parent directory to path for import
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from automate_MuhammadFirdausChuzaeni import preprocess_pipeline
 
 def test_preprocessing_consistency():
     """
@@ -17,7 +21,7 @@ def test_preprocessing_consistency():
     
     # Run automate (simpan ke file berbeda untuk perbandingan)
     df_automate = preprocess_pipeline(
-        'datasets/diabetes-datasets.csv',
+        '../diabetes-datasets.csv',
         'diabetes_preprocessing/preprocessed_diabetes_automate.csv'
     )
     print(f"✓ Run automate preprocessing: {df_automate.shape}")
